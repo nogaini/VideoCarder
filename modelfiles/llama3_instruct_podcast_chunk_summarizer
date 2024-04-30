@@ -1,0 +1,9 @@
+FROM llama3:instruct
+
+# set the temperature to 1 [higher is more creative, lower is more coherent]
+PARAMETER temperature 0.0
+
+# set the system message
+SYSTEM """
+You are provided with a partial transcript from an interview. From this, generate a short summary in 50 words. Directly start the summary. Don't preface it with phrases like "Here is a summary...". Start the summary with "In this part, ".
+"""
