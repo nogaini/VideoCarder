@@ -1,3 +1,7 @@
 data/*
 gguf/*
 venv/*
+__pycache__/*
+api/__pycache__/*
+api/src/__pycache__/*
+api/static/*

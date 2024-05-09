@@ -1,3 +1,4 @@
+# User workflow:
 # [FRONTEND async] User provides YouTube video link
 # [BACKEND] Download audio corresponding to video
 # [BACKEND] Transcribe downloaded audio file
@@ -10,14 +11,82 @@
 # [FRONTEND] Fetch enriched summary JSONs
 # [FRONTEND] Display data from each enriched summary JSON
 
-from src.transcript_generation import load_stable_whisper_model
-from src.download_utils import download_audio
+from pathlib import Path
+from src.speech_recognition import (
+    load_stable_whisper_model,
+    get_transcript_from_result_dict,
+    preprocess_segments,
+)
+from src.downloading import download_audio
+from src.chunking import load_text_splitter, postprocess_chunk
+from src.summarization import load_llamacpp_llm, chunks_to_summaries
+from src.retrieval import (
+    load_document_store,
+    load_embedder,
+    load_ranker,
+    load_retriever,
+    load_sampler,
+    prepare_docs,
+    get_doc_embeddings,
+    load_pipeline,
+    enrich_summary_dicts,
+)
+from fastapi import FastAPI
+from pydantic import HttpUrl
+from models import SummaryDict
+
+SUMMARIZER_LLM_GGUF_PATH = (
+    "/home/jobin/Projects/transcript_summarizer/gguf/Meta-Llama-3-8B-Instruct.Q6_K.gguf"
+)
 
 transcription_model = load_stable_whisper_model("tiny")
+text_splitter = load_text_splitter(
+    "RecursiveCharacterTextSplitter",
+    separators=["."],
+    chunk_size=5000,
+    chunk_overlap=0,
+    length_function=len,
+    is_separator_regex=False,
+)
+summarizer_llm = load_llamacpp_llm(SUMMARIZER_LLM_GGUF_PATH)
 
-async def predict(url):
-    audio_path = download_audio(url, save_dir="", save_name="test")
-    
+doc_embedder = load_embedder(
+    embedder_type="SentenceTransformersDocumentEmbedder",
+    model="sentence-transformers/all-mpnet-base-v2",
+)
+query_embedder = load_embedder(
+    embedder_type="SentenceTransformersTextEmbedder",
+    model="sentence-transformers/all-mpnet-base-v2",
+)
+document_store = load_document_store(store_type="InMemoryDocumentStore")
+retriever = load_retriever(
+    retriever_type="InMemoryEmbeddingRetriever", document_store=document_store, top_k=3
+)
+ranker = load_ranker(
+    ranker_type="MetaFieldRanker", meta_field="start", sort_order="ascending"
+)
+sampler = load_sampler(sampler_type="TopPSampler", top_p=0.95)
+
+app = FastAPI()
+
+
+@app.get("/summarize/")
+async def predict(url: HttpUrl) -> list[SummaryDict]:
+    audio_path = download_audio(url, save_dir=Path("api/static/"), save_name="test")
     result = transcription_model.transcribe(audio_path, word_timestamps=True)
-    result_dict = result.to_dict()
-    transcript = result_dict["text"].strip()
+    result_dict = result.to_dict()  # type: ignore
+    merged_segments = await preprocess_segments(result_dict["segments"])
+
+    transcript = get_transcript_from_result_dict(result_dict)
+    transcript_chunks = text_splitter.split_text(transcript)
+    transcript_chunks = [postprocess_chunk(x) for x in transcript_chunks]
+    summary_json_list = chunks_to_summaries(transcript_chunks, llm=summarizer_llm)
+
+    docs = prepare_docs(merged_segments)
+    docs_with_embeddings = get_doc_embeddings(doc_embedder, docs)
+    document_store.write_documents(docs_with_embeddings["documents"])
+    pipeline = load_pipeline(query_embedder, retriever, sampler)
+    enriched_summary_dicts = enrich_summary_dicts(
+        summary_json_list, ranker=ranker, pipeline=pipeline
+    )
+    return enriched_summary_dicts
