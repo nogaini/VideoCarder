@@ -10,7 +10,7 @@ def download_audio(url: HttpUrl, save_dir: Path, save_name: str) -> str:
     and saves it as an mp3 file.
 
     Parameters:
-        url (str): The URL of the YouTube video to be downloaded.
+        url (HttpUrl): The URL of the YouTube video to be downloaded.
         save_dir (Path): The directory where the audio will be saved.
                           If this directory does not exist, it is created.
         save_name (str): The name that will be given to the saved mp3 file.
