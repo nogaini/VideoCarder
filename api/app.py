@@ -11,11 +11,12 @@
 # [FRONTEND] Display data from each enriched summary JSON
 
 from src.transcript_generation import load_stable_whisper_model
+from src.download_utils import download_audio
 
 transcription_model = load_stable_whisper_model("tiny")
 
 async def predict(url):
-    audio_path = download_audio(url: str, save_dir: Path, save_name: str)
+    audio_path = download_audio(url, save_dir="", save_name="test")
     
     result = transcription_model.transcribe(audio_path, word_timestamps=True)
     result_dict = result.to_dict()
