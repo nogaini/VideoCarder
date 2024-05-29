@@ -40,7 +40,10 @@ def preprocess_segments(segments: list[dict]) -> list[dict]:
     filtered_segments = filter_segments_by_duration(merged_segments)
     return filtered_segments
 
-def filter_segments_by_duration(segments: list[dict], duration_threshold: float=2) -> list[dict]:
+
+def filter_segments_by_duration(
+    segments: list[dict], duration_threshold: float = 2
+) -> list[dict]:
     filtered_segments = []
     for segment in segments:
         if (segment["end"] - segment["start"]) < duration_threshold:
