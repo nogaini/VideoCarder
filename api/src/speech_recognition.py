@@ -35,9 +35,18 @@ def get_transcript_from_result_dict(result_dict: dict) -> str:
     return transcript
 
 
-async def preprocess_segments(segments: list[dict]) -> list[dict]:
+def preprocess_segments(segments: list[dict]) -> list[dict]:
     merged_segments = merge_segments(segments)
-    return merged_segments
+    filtered_segments = filter_segments_by_duration(merged_segments)
+    return filtered_segments
+
+def filter_segments_by_duration(segments: list[dict], duration_threshold: float=2) -> list[dict]:
+    filtered_segments = []
+    for segment in segments:
+        if (segment["end"] - segment["start"]) < duration_threshold:
+            continue
+        filtered_segments.append(segment)
+    return filtered_segments
 
 
 def merge_segments(segments: list) -> list:

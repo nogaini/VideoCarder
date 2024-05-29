@@ -21,23 +21,21 @@ from src.downloading import download_audio
 from src.chunking import load_text_splitter, postprocess_chunk
 from src.summarization import load_llamacpp_llm, chunks_to_summaries
 from src.retrieval import (
-    load_document_store,
-    load_embedder,
-    load_ranker,
-    load_retriever,
-    load_sampler,
-    prepare_docs,
-    get_doc_embeddings,
+    load_components,
     load_pipeline,
     enrich_summary_dicts,
 )
 from fastapi import FastAPI
+
+# from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl
 from models import SummaryDict
 
 SUMMARIZER_LLM_GGUF_PATH = (
     "/home/jobin/Projects/transcript_summarizer/gguf/Meta-Llama-3-8B-Instruct.Q6_K.gguf"
 )
+
 
 transcription_model = load_stable_whisper_model("tiny")
 text_splitter = load_text_splitter(
@@ -50,29 +48,20 @@ text_splitter = load_text_splitter(
 )
 summarizer_llm = load_llamacpp_llm(SUMMARIZER_LLM_GGUF_PATH)
 
-doc_embedder = load_embedder(
-    embedder_type="SentenceTransformersDocumentEmbedder",
-    model="sentence-transformers/all-mpnet-base-v2",
-)
-query_embedder = load_embedder(
-    embedder_type="SentenceTransformersTextEmbedder",
-    model="sentence-transformers/all-mpnet-base-v2",
-)
-document_store = load_document_store(store_type="InMemoryDocumentStore")
-retriever = load_retriever(
-    retriever_type="InMemoryEmbeddingRetriever", document_store=document_store, top_k=3
-)
-ranker = load_ranker(
-    ranker_type="MetaFieldRanker", meta_field="start", sort_order="ascending"
-)
-sampler = load_sampler(sampler_type="TopPSampler", top_p=0.95)
-
 app = FastAPI()
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/summarize/")
 async def predict(url: HttpUrl) -> list[SummaryDict]:
-    audio_path = download_audio(url, save_dir=Path("api/static/"), save_name="test")
+    audio_path = download_audio(url, save_dir=Path("api/static/"))
     result = transcription_model.transcribe(audio_path, word_timestamps=True)
     result_dict = result.to_dict()  # type: ignore
     merged_segments = await preprocess_segments(result_dict["segments"])
@@ -82,9 +71,7 @@ async def predict(url: HttpUrl) -> list[SummaryDict]:
     transcript_chunks = [postprocess_chunk(x) for x in transcript_chunks]
     summary_json_list = chunks_to_summaries(transcript_chunks, llm=summarizer_llm)
 
-    docs = prepare_docs(merged_segments)
-    docs_with_embeddings = get_doc_embeddings(doc_embedder, docs)
-    document_store.write_documents(docs_with_embeddings["documents"])
+    query_embedder, retriever, sampler, ranker = load_components(merged_segments)
     pipeline = load_pipeline(query_embedder, retriever, sampler)
     enriched_summary_dicts = enrich_summary_dicts(
         summary_json_list, ranker=ranker, pipeline=pipeline
