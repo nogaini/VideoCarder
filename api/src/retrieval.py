@@ -58,7 +58,9 @@ def load_components(
     )
     sampler = load_sampler(sampler_type="TopPSampler", top_p=0.95)
 
-    joiner = load_joiner(joiner_type="DocumentJoiner")
+    joiner = load_joiner(
+        joiner_type="DocumentJoiner", join_mode="reciprocal_rank_fusion"
+    )
 
     document_store = load_document_store(store_type="InMemoryDocumentStore")
     document_store.write_documents(docs_with_embeddings["documents"])

@@ -68,11 +68,15 @@ def bulletize_summary(summary: str, llm: Llama) -> str:
     )
     return json.loads(response_text)
 
+def chunk_to_summary(chunk: str, llm: Llama):
+    summary = summarize_chunk(chunk)
+    summary_json = bulletize_summary(summary, llm)
+    return summary_json
+
 
 def chunks_to_summaries(chunks: list[str], llm: Llama) -> list[dict]:
     summary_json_list = []
     for chunk in chunks:
-        summary = summarize_chunk(chunk)
-        summary_json = bulletize_summary(summary, llm)
+        summary_json = chunk_to_summary(chunk, llm)
         summary_json_list.append(summary_json)
     return summary_json_list
