@@ -1,3 +1,5 @@
+from api.models import SummaryDict
+
 from haystack import Document
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
@@ -10,7 +12,6 @@ from haystack.components.joiners import DocumentJoiner
 from haystack.components.rankers import MetaFieldRanker, TransformersSimilarityRanker
 from haystack.components.samplers import TopPSampler
 from haystack import Pipeline
-from models import SummaryDict
 
 
 def load_components(

@@ -1,26 +1,27 @@
 from pathlib import Path
-from nicegui import ui
 import asyncio
 import concurrent.futures
 from functools import partial
 from multiprocessing import Manager, Queue
 
-from src.speech_recognition import (
+from api.src.speech_recognition import (
     load_stable_whisper_model,
     get_transcript_from_result_dict,
     preprocess_segments,
 )
-from src.downloading import download_audio, download_video
-from src.chunking import load_text_splitter, postprocess_chunk
-from src.summarization import load_llamacpp_llm, chunks_to_summaries
-from src.retrieval import (
+from api.src.downloading import download_audio, download_video
+from api.src.chunking import load_text_splitter, postprocess_chunk
+from api.src.summarization import load_llamacpp_llm, chunks_to_summaries
+from api.src.retrieval import (
     load_components,
     load_pipeline,
     enrich_summary_dicts,
 )
-from src.trimming import generate_merged_video_for_bullet_dicts
-from src.file_utils import cleanup
-from models import SummaryDict
+from api.src.trimming import generate_merged_video_for_bullet_dicts
+from api.src.file_utils import cleanup
+from api.models import SummaryDict
+
+from nicegui import ui
 
 transcription_model = load_stable_whisper_model("tiny")
 text_splitter = load_text_splitter(
@@ -35,10 +36,10 @@ text_splitter = load_text_splitter(
 SUMMARIZER_LLM_GGUF_PATH = (
     "/home/jobin/Projects/transcript_summarizer/gguf/Meta-Llama-3-8B-Instruct.Q6_K.gguf"
 )
-INPUT_VIDEO_FILES_PATH = Path("static/input/video")
-INPUT_AUDIO_FILES_PATH = Path("static/input/audio")
-TRIM_FILES_PATH = Path("static/trims")
-MERGED_FILES_PATH = Path("static/merged")
+INPUT_VIDEO_FILES_PATH = Path("api/static/input/video")
+INPUT_AUDIO_FILES_PATH = Path("api/static/input/audio")
+TRIM_FILES_PATH = Path("api/static/trims")
+MERGED_FILES_PATH = Path("api/static/merged")
 
 summarizer_llm = load_llamacpp_llm(SUMMARIZER_LLM_GGUF_PATH)
 
@@ -119,7 +120,7 @@ def main_page():
         # Put request in process pool to not block UI
         loop = asyncio.get_running_loop()
 
-        with concurrent.futures.ThreadPoolExecutor() as pool:
+        with concurrent.futures.ProcessPoolExecutor() as pool:
             video_path = await loop.run_in_executor(
                 pool, partial(download_video, url, save_dir=INPUT_VIDEO_FILES_PATH)
             )
