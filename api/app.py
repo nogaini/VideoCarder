@@ -64,16 +64,16 @@ async def predict(url: HttpUrl) -> list[SummaryDict]:
     audio_path = download_audio(url, save_dir=Path("api/static/"))
     result = transcription_model.transcribe(audio_path, word_timestamps=True)
     result_dict = result.to_dict()  # type: ignore
-    merged_segments = await preprocess_segments(result_dict["segments"])
+    filtered_segments = preprocess_segments(result_dict["segments"])
 
     transcript = get_transcript_from_result_dict(result_dict)
     transcript_chunks = text_splitter.split_text(transcript)
     transcript_chunks = [postprocess_chunk(x) for x in transcript_chunks]
     summary_json_list = chunks_to_summaries(transcript_chunks, llm=summarizer_llm)
 
-    query_embedder, retriever, sampler, ranker = load_components(merged_segments)
-    pipeline = load_pipeline(query_embedder, retriever, sampler)
+    pipeline_components_dict = load_components(filtered_segments)
+    pipeline = load_pipeline(pipeline_components_dict)
     enriched_summary_dicts = enrich_summary_dicts(
-        summary_json_list, ranker=ranker, pipeline=pipeline
+        summary_json_list, ranker=pipeline_components_dict["ranker"], pipeline=pipeline
     )
     return enriched_summary_dicts
