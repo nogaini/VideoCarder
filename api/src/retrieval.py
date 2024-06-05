@@ -227,9 +227,6 @@ def retrieve_for_query(
         }
     )
 
-    # response = pipeline.run({"query_embedder": {"text": query}})
-    # response = pipeline.run({"query_embedder": {"text": query},
-    #                          "retriever": {"filters": {"field": "meta.duration", "operator": ">", "value": 2}}})
     sampled_docs = response["sampler"]["documents"]
     ranked_docs = ranker.run(documents=sampled_docs)
     return ranked_docs["documents"]
