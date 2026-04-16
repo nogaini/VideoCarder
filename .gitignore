@@ -5,6 +5,7 @@ __pycache__/*
 api/__pycache__/*
 api/src/__pycache__/*
 api/static/*
+notebooks/*
 client/node_modules/*
 client/vite.config.ts
 client/package-lock.json
