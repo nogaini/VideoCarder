@@ -1,6 +1,6 @@
 # VideoCarder
 
-> Turn any YouTube video into evidence-based summary cards - each bullet point backed by the exact clip that supports it.
+> Turn any YouTube video with speech into evidence-based summary cards - each bullet point backed by the exact clip that supports it.
 
 ---
 
@@ -10,7 +10,7 @@
 
 ## About
 
-VideoCarder is a fully local, AI-powered pipeline that takes a YouTube URL and produces a set of _VideoCards_ - structured summary cards where every bullet point is accompanied by a trimmed video clip of the source moment in the video. Rather than generating a summary you have to trust, VideoCarder retrieves and surfaces the exact segments of the original video that support each point, letting you verify claims at a glance.
+VideoCarder is a fully local, AI-powered pipeline that takes a YouTube URL and produces a set of _VideoCards_ - structured summary cards based on the speech uttered, where every bullet point is accompanied by a trimmed video clip of the source moment in the video. Rather than generating a summary you have to trust, VideoCarder retrieves and surfaces the exact segments of the original video that support each point, letting you verify claims at a glance.
 
 ---
 
