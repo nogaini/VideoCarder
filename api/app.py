@@ -12,29 +12,28 @@
 # [FRONTEND] Display data from each enriched summary JSON
 
 from pathlib import Path
-from src.speech_recognition import (
-    load_stable_whisper_model,
-    get_transcript_from_result_dict,
-    preprocess_segments,
-)
-from src.downloading import download_audio
+
+from fastapi import FastAPI
+from models import SummaryDict
+from pydantic import HttpUrl
 from src.chunking import load_text_splitter, postprocess_chunk
-from src.summarization import load_llamacpp_llm, chunks_to_summaries
+from src.downloading import download_audio
 from src.retrieval import (
+    enrich_summary_dicts,
     load_components,
     load_pipeline,
-    enrich_summary_dicts,
 )
-from fastapi import FastAPI
+from src.speech_recognition import (
+    get_transcript_from_result_dict,
+    load_stable_whisper_model,
+    preprocess_segments,
+)
+from src.summarization import chunks_to_summaries, load_llamacpp_llm
 
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.cors import CORSMiddleware
-from pydantic import HttpUrl
-from models import SummaryDict
 
-SUMMARIZER_LLM_GGUF_PATH = (
-    "/home/jobin/Projects/transcript_summarizer/gguf/Meta-Llama-3-8B-Instruct.Q6_K.gguf"
-)
+SUMMARIZER_LLM_GGUF_PATH = "/path/to/gguf/model.gguf"
 
 
 transcription_model = load_stable_whisper_model("tiny")

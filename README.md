@@ -127,7 +127,7 @@ VideoCarder/
 ### Installation
 
 ```bash
-git clone https://github.com/jobini/VideoCarder.git
+git clone https://github.com/nogaini/VideoCarder.git
 cd VideoCarder
 uv sync
 ```
@@ -154,7 +154,7 @@ A few paths are currently hardcoded and should be updated before running:
 
 | Setting | File | Default |
 |---|---|---|
-| GGUF model path | `api/src/summarization.py` | `/home/.../Meta-Llama-3-8B-Instruct.Q6_K.gguf` |
+| GGUF model path | `api/src/summarization.py` | `/path/to/gguf/model.gguf` |
 | Static media directory | `api/app.py` | `api/static/` |
 | Whisper model size | `api/src/speech_recognition.py` | `"tiny"` (options: `small`, `medium`, `large`) |
 

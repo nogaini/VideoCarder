@@ -1,27 +1,27 @@
-from pathlib import Path
 import asyncio
 import concurrent.futures
 from functools import partial
 from multiprocessing import Manager, Queue
-
-from api.src.speech_recognition import (
-    load_stable_whisper_model,
-    get_transcript_from_result_dict,
-    preprocess_segments,
-)
-from api.src.downloading import download_audio, download_video
-from api.src.chunking import load_text_splitter, postprocess_chunk
-from api.src.summarization import load_llamacpp_llm, chunks_to_summaries
-from api.src.retrieval import (
-    load_components,
-    load_pipeline,
-    enrich_summary_dicts,
-)
-from api.src.trimming import generate_merged_video_for_bullet_dicts
-from api.src.file_utils import cleanup
-from api.models import SummaryDict
+from pathlib import Path
 
 from nicegui import ui
+
+from api.models import SummaryDict
+from api.src.chunking import load_text_splitter, postprocess_chunk
+from api.src.downloading import download_audio, download_video
+from api.src.file_utils import cleanup
+from api.src.retrieval import (
+    enrich_summary_dicts,
+    load_components,
+    load_pipeline,
+)
+from api.src.speech_recognition import (
+    get_transcript_from_result_dict,
+    load_stable_whisper_model,
+    preprocess_segments,
+)
+from api.src.summarization import chunks_to_summaries, load_llamacpp_llm
+from api.src.trimming import generate_merged_video_for_bullet_dicts
 
 transcription_model = load_stable_whisper_model("tiny")
 text_splitter = load_text_splitter(
@@ -33,9 +33,7 @@ text_splitter = load_text_splitter(
     is_separator_regex=False,
 )
 
-SUMMARIZER_LLM_GGUF_PATH = (
-    "/home/jobin/Projects/transcript_summarizer/gguf/Meta-Llama-3-8B-Instruct.Q6_K.gguf"
-)
+SUMMARIZER_LLM_GGUF_PATH = "/path/to/gguf/model.gguf"
 INPUT_VIDEO_FILES_PATH = Path("api/static/input/video")
 INPUT_AUDIO_FILES_PATH = Path("api/static/input/audio")
 TRIM_FILES_PATH = Path("api/static/trims")
